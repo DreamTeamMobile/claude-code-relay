@@ -1,0 +1,58 @@
+{
+  "name": "claude-code-relay",
+  "version": "0.0.1",
+  "description": "Local proxy that exposes Claude CLI as an OpenAI-compatible API server",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "claude-code-relay": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js serve",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "claude",
+    "openai",
+    "proxy",
+    "llm",
+    "api",
+    "cli"
+  ],
+  "author": "Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DreamTeamMobile/claude-code-relay.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DreamTeamMobile/claude-code-relay/issues"
+  },
+  "homepage": "https://github.com/DreamTeamMobile/claude-code-relay#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0"
+  }
+}
