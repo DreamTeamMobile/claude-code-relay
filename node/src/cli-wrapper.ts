@@ -91,9 +91,11 @@ export class ClaudeCLI {
 
     return new Promise((resolve, reject) => {
       const args = ["-p", "--model", normalizedModel, "--output-format", "text"];
+      const startTime = Date.now();
 
       if (this.config.verbose) {
-        console.log(`Running: ${this.config.cliPath} ${args.join(" ")}`);
+        console.log(`[claude] spawning: ${this.config.cliPath} ${args.join(" ")}`);
+        console.log(`[claude] prompt length: ${prompt.length} chars`);
       }
 
       const proc = spawn(this.config.cliPath, args, {
@@ -112,6 +114,10 @@ export class ClaudeCLI {
       });
 
       proc.on("close", (code) => {
+        const elapsed = Date.now() - startTime;
+        if (this.config.verbose) {
+          console.log(`[claude] process exited code=${code} elapsed=${elapsed}ms output=${stdout.length} chars`);
+        }
         if (code !== 0) {
           reject(new Error(`Claude CLI failed: ${stderr}`));
         } else {
@@ -142,15 +148,24 @@ export class ClaudeCLI {
   ): AsyncGenerator<string, void, unknown> {
     const prompt = this.buildPrompt(messages, systemPrompt);
     const normalizedModel = this.normalizeModel(model);
+    const startTime = Date.now();
 
-    const args = ["-p", "--model", normalizedModel, "--output-format", "stream-json"];
+    const args = ["-p", "--verbose", "--model", normalizedModel, "--output-format", "stream-json"];
 
     if (this.config.verbose) {
-      console.log(`Running: ${this.config.cliPath} ${args.join(" ")}`);
+      console.log(`[claude] spawning stream: ${this.config.cliPath} ${args.join(" ")}`);
+      console.log(`[claude] prompt length: ${prompt.length} chars`);
     }
 
     const proc = spawn(this.config.cliPath, args, {
       stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    proc.on("close", (code) => {
+      if (this.config.verbose) {
+        const elapsed = Date.now() - startTime;
+        console.log(`[claude] stream process exited code=${code} elapsed=${elapsed}ms`);
+      }
     });
 
     // Send prompt
@@ -160,7 +175,12 @@ export class ClaudeCLI {
     let buffer = "";
 
     for await (const chunk of proc.stdout) {
-      buffer += chunk.toString();
+      const chunkStr = chunk.toString();
+      buffer += chunkStr;
+
+      if (this.config.verbose) {
+        console.log(`[claude] stdout chunk: ${chunkStr.length} bytes`);
+      }
 
       // Process complete lines
       while (buffer.includes("\n")) {
@@ -172,12 +192,22 @@ export class ClaudeCLI {
 
         try {
           const data = JSON.parse(trimmed);
-          if (data.content) {
+          if (this.config.verbose) {
+            console.log(`[claude] parsed type=${data.type}`);
+          }
+          // Handle claude CLI stream-json format
+          if (data.type === "assistant" && data.message?.content) {
+            for (const block of data.message.content) {
+              if (block.type === "text" && block.text) {
+                yield block.text;
+              }
+            }
+          } else if (data.type === "content_block_delta" && data.delta?.text) {
+            yield data.delta.text;
+          } else if (data.content) {
             yield data.content;
           } else if (data.text) {
             yield data.text;
-          } else if (data.delta?.text) {
-            yield data.delta.text;
           }
         } catch {
           // Not JSON, might be raw text

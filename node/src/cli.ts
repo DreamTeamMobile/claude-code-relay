@@ -67,12 +67,14 @@ if (command === "serve") {
   console.log(`  Port: ${port}`);
   console.log(`  Claude CLI: ${claudePath}`);
   console.log(`  Timeout: ${timeout}s`);
+  console.log(`  Verbose: ${verbose}`);
   console.log();
   console.log(`API endpoint: http://${host}:${port}/v1/chat/completions`);
   console.log();
 
   runServer(host, port, {
     cli: { cliPath: claudePath, timeout, verbose },
+    verbose,
   });
 } else if (command === "check") {
   console.log("Checking Claude CLI...");

@@ -14,6 +14,16 @@ import type {
 
 export interface AppConfig {
   cli?: Partial<CLIConfig>;
+  verbose?: boolean;
+}
+
+let _verbose = false;
+
+function log(...args: unknown[]): void {
+  if (_verbose) {
+    const timestamp = new Date().toISOString().slice(11, 23);
+    console.log(`[${timestamp}]`, ...args);
+  }
 }
 
 let _cli: ClaudeCLI | null = null;
@@ -99,6 +109,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
     const chatId = generateId("chatcmpl");
     const created = Math.floor(Date.now() / 1000);
+    const msgCount = request.messages?.length ?? 0;
+    const lastMsg = request.messages?.[msgCount - 1]?.content?.slice(0, 30) ?? "";
+    log(`→ POST /v1/chat/completions model=${request.model} stream=${!!request.stream} msgs=${msgCount} "${lastMsg}${lastMsg.length >= 30 ? '...' : ''}"`);
 
     if (request.stream) {
       // Streaming response
@@ -120,8 +133,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       };
       sendSSEChunk(res, JSON.stringify(initial));
 
+      let totalLen = 0;
       try {
         for await (const text of _cli.stream(request.messages, request.model)) {
+          totalLen += text.length;
           const chunk: ChatCompletionChunk = {
             id: chatId,
             object: "chat.completion.chunk",
@@ -131,7 +146,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           };
           sendSSEChunk(res, JSON.stringify(chunk));
         }
+        log(`← stream complete, total length=${totalLen}`);
       } catch (err) {
+        log(`← stream error: ${err}`);
         sendSSEChunk(res, JSON.stringify({ error: { message: String(err), type: "server_error" } }));
       }
 
@@ -152,6 +169,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     // Non-streaming response
     try {
       const content = await _cli.complete(request.messages, request.model);
+      log(`← response complete, length=${content.length}`);
       const response: ChatCompletionResponse = {
         id: chatId,
         object: "chat.completion",
@@ -162,6 +180,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       };
       sendJson(res, response);
     } catch (err) {
+      log(`← error: ${err}`);
       sendError(res, String(err));
     }
     return;
@@ -172,8 +191,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 }
 
 export function createApp(config?: AppConfig) {
+  _verbose = config?.verbose ?? process.env.CLAUDE_CODE_RELAY_VERBOSE === "1";
+
   try {
-    _cli = new ClaudeCLI(config?.cli);
+    _cli = new ClaudeCLI({ ...config?.cli, verbose: _verbose });
   } catch (err) {
     console.error(`Failed to initialize Claude CLI: ${err}`);
     _cli = null;

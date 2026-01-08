@@ -1,6 +1,6 @@
 {
   "name": "claude-code-relay",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Local proxy that exposes Claude CLI as an OpenAI-compatible API server",
   "type": "module",
   "main": "./dist/cjs/index.js",

@@ -1,0 +1,7 @@
+{
+  "name": "openai-bun-demo",
+  "type": "module",
+  "dependencies": {
+    "openai": "^4.70.0"
+  }
+}

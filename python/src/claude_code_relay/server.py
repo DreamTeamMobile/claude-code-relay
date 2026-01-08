@@ -28,6 +28,15 @@ logger = logging.getLogger(__name__)
 
 # Global CLI instance (set by create_server)
 _cli: ClaudeCLI | None = None
+_verbose: bool = False
+
+
+def _log(msg: str) -> None:
+    """Log if verbose mode is enabled."""
+    if _verbose:
+        timestamp = time.strftime("%H:%M:%S", time.localtime())
+        ms = int((time.time() % 1) * 1000)
+        print(f"[{timestamp}.{ms:03d}] {msg}")
 
 
 class RequestHandler(BaseHTTPRequestHandler):
@@ -107,6 +116,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         chat_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
         created = int(time.time())
 
+        msg_count = len(request.messages)
+        last_msg = request.messages[-1].content[:30] if request.messages else ""
+        _log(f"→ POST /v1/chat/completions model={request.model} stream={request.stream} msgs={msg_count} \"{last_msg}{'...' if len(last_msg) >= 30 else ''}\"")
+
         if request.stream:
             self._handle_stream(request, messages, chat_id, created)
         else:
@@ -124,7 +137,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         try:
             content = _cli.complete(messages, model=request.model)
+            _log(f"← response complete, length={len(content)}")
         except Exception as e:
+            _log(f"← error: {e}")
             logger.error(f"Completion failed: {e}")
             self._send_error(str(e))
             return
@@ -167,8 +182,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         }
         self._send_sse_chunk(json.dumps(initial))
 
+        total_len = 0
         try:
             for text in _cli.stream(messages, model=request.model):
+                total_len += len(text)
                 chunk = {
                     "id": chat_id,
                     "object": "chat.completion.chunk",
@@ -177,7 +194,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                     "choices": [{"index": 0, "delta": {"content": text}, "finish_reason": None}],
                 }
                 self._send_sse_chunk(json.dumps(chunk))
+            _log(f"← stream complete, total length={total_len}")
         except Exception as e:
+            _log(f"← stream error: {e}")
             logger.error(f"Streaming failed: {e}")
             error = json.dumps({"error": {"message": str(e), "type": "server_error"}})
             self._send_sse_chunk(error)
@@ -198,9 +217,11 @@ def create_server(
     host: str = "127.0.0.1",
     port: int = 52014,
     config: CLIConfig | None = None,
+    verbose: bool = False,
 ) -> HTTPServer:
     """Create HTTP server instance."""
-    global _cli
+    global _cli, _verbose
+    _verbose = verbose
 
     try:
         _cli = ClaudeCLI(config)
@@ -216,9 +237,10 @@ def run_server(
     host: str = "127.0.0.1",
     port: int = 52014,
     config: CLIConfig | None = None,
+    verbose: bool = False,
 ) -> None:
     """Run the server."""
-    server = create_server(host, port, config)
+    server = create_server(host, port, config, verbose=verbose)
     logger.info(f"Starting server on http://{host}:{port}")
     try:
         server.serve_forever()

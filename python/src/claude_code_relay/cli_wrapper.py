@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import subprocess
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
@@ -101,6 +102,7 @@ class ClaudeCLI:
         """Run a non-streaming completion."""
         prompt = self._build_prompt(messages, system_prompt)
         normalized_model = self._normalize_model(model)
+        start_time = time.time()
 
         cmd = [
             self.config.cli_path,
@@ -110,7 +112,8 @@ class ClaudeCLI:
         ]
 
         if self.config.verbose:
-            logger.info(f"Running: {' '.join(cmd)}")
+            logger.info(f"[claude] spawning: {' '.join(cmd)}")
+            logger.info(f"[claude] prompt length: {len(prompt)} chars")
 
         try:
             result = subprocess.run(
@@ -122,6 +125,10 @@ class ClaudeCLI:
             )
         except subprocess.TimeoutExpired as e:
             raise RuntimeError(f"Claude CLI timeout after {self.config.timeout}s") from e
+
+        elapsed = int((time.time() - start_time) * 1000)
+        if self.config.verbose:
+            logger.info(f"[claude] process exited code={result.returncode} elapsed={elapsed}ms output={len(result.stdout)} chars")
 
         if result.returncode != 0:
             raise RuntimeError(f"Claude CLI failed: {result.stderr}")
@@ -137,16 +144,19 @@ class ClaudeCLI:
         """Run a streaming completion."""
         prompt = self._build_prompt(messages, system_prompt)
         normalized_model = self._normalize_model(model)
+        start_time = time.time()
 
         cmd = [
             self.config.cli_path,
             "-p",
+            "--verbose",  # Required for stream-json with -p
             "--model", normalized_model,
             "--output-format", "stream-json",
         ]
 
         if self.config.verbose:
-            logger.info(f"Running: {' '.join(cmd)}")
+            logger.info(f"[claude] spawning stream: {' '.join(cmd)}")
+            logger.info(f"[claude] prompt length: {len(prompt)} chars")
 
         proc = subprocess.Popen(
             cmd,
@@ -171,19 +181,32 @@ class ClaudeCLI:
 
             try:
                 data = json.loads(line)
-                # Extract text content from stream-json format
-                if "content" in data:
+                if self.config.verbose:
+                    logger.debug(f"[claude] parsed type={data.get('type')}")
+                # Handle claude CLI stream-json format
+                if data.get("type") == "assistant" and "message" in data:
+                    content = data["message"].get("content", [])
+                    for block in content:
+                        if block.get("type") == "text" and "text" in block:
+                            yield block["text"]
+                elif data.get("type") == "content_block_delta":
+                    delta = data.get("delta", {})
+                    if "text" in delta:
+                        yield delta["text"]
+                elif "content" in data:
                     yield data["content"]
                 elif "text" in data:
                     yield data["text"]
-                elif "delta" in data and "text" in data["delta"]:
-                    yield data["delta"]["text"]
             except json.JSONDecodeError:
                 # Not JSON, might be raw text
                 if not line.startswith("{"):
                     yield line
 
         proc.wait()
+
+        elapsed = int((time.time() - start_time) * 1000)
+        if self.config.verbose:
+            logger.info(f"[claude] stream process exited code={proc.returncode} elapsed={elapsed}ms")
 
         if proc.returncode != 0:
             assert proc.stderr is not None

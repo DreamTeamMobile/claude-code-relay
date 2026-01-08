@@ -83,12 +83,13 @@ def main() -> None:
         print(f"  Port: {args.port}")
         print(f"  Claude CLI: {args.claude_path}")
         print(f"  Timeout: {args.timeout}s")
+        print(f"  Verbose: {args.verbose}")
         print()
         print(f"API endpoint: http://{args.host}:{args.port}/v1/chat/completions")
         print()
 
         try:
-            run_server(host=args.host, port=args.port, config=config)
+            run_server(host=args.host, port=args.port, config=config, verbose=args.verbose)
         except KeyboardInterrupt:
             print("\nShutting down...")
             sys.exit(0)
