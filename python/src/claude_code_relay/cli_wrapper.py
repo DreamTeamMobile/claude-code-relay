@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class ClaudeCLI:
 
     def _build_prompt(
         self,
-        messages: list[dict],
+        messages: list[dict[str, Any]],
         system_prompt: str | None = None,
     ) -> str:
         """Convert OpenAI messages to a single prompt string."""
@@ -93,7 +94,7 @@ class ClaudeCLI:
 
     def complete(
         self,
-        messages: list[dict],
+        messages: list[dict[str, Any]],
         model: str = "sonnet",
         system_prompt: str | None = None,
     ) -> str:
@@ -129,7 +130,7 @@ class ClaudeCLI:
 
     def stream(
         self,
-        messages: list[dict],
+        messages: list[dict[str, Any]],
         model: str = "sonnet",
         system_prompt: str | None = None,
     ) -> Iterator[str]:

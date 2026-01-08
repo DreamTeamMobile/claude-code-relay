@@ -39,7 +39,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         """Log using logging module instead of stderr."""
         logger.info("%s - %s", self.address_string(), format % args)
 
-    def _send_json(self, data: dict, status: int = 200) -> None:
+    def _send_json(self, data: dict[str, Any], status: int = 200) -> None:
         """Send JSON response."""
         body = json.dumps(data).encode()
         self.send_response(status)
@@ -115,7 +115,7 @@ class RequestHandler(BaseHTTPRequestHandler):
     def _handle_completion(
         self,
         request: ChatCompletionRequest,
-        messages: list[dict],
+        messages: list[dict[str, Any]],
         chat_id: str,
         created: int,
     ) -> None:
@@ -141,7 +141,7 @@ class RequestHandler(BaseHTTPRequestHandler):
     def _handle_stream(
         self,
         request: ChatCompletionRequest,
-        messages: list[dict],
+        messages: list[dict[str, Any]],
         chat_id: str,
         created: int,
     ) -> None:
