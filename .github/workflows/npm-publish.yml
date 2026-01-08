@@ -1,4 +1,5 @@
-# Publish Node package to npm
+# Publish Node package to npm using OIDC trusted publishing
+# Setup: npm.com > Package Settings > Publishing access > Configure trusted publishing
 
 name: Publish npm Package
 
@@ -12,6 +13,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: npm
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         working-directory: node
@@ -28,7 +32,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm with provenance
+        run: npm publish --access public --provenance
