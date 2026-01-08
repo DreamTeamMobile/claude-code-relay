@@ -2,7 +2,7 @@
 
 __version__ = "0.0.1"
 
-from .cli_wrapper import CLIConfig, ClaudeCLI
+from .cli_wrapper import ClaudeCLI, CLIConfig
 from .models import ChatCompletionRequest, ChatCompletionResponse, ChatMessage
 from .server import create_server, run_server
 

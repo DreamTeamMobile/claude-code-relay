@@ -16,9 +16,9 @@ from .models import (
     ChatCompletionResponse,
     ChatMessage,
     Choice,
-    Usage,
     ModelInfo,
     ModelList,
+    Usage,
 )
 
 if TYPE_CHECKING:

@@ -7,7 +7,7 @@ import logging
 import os
 import sys
 
-from .cli_wrapper import CLIConfig, ClaudeCLI
+from .cli_wrapper import ClaudeCLI, CLIConfig
 from .server import run_server
 
 
