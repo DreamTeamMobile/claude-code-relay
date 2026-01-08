@@ -1,14 +1,4 @@
 # Publish Node package to npm
-#
-# SETUP REQUIRED:
-# 1. Create npm account at https://www.npmjs.com/
-# 2. Create access token: npm.com > Access Tokens > Generate New Token > Automation
-# 3. Add token as GitHub secret: Settings > Secrets > Actions > New repository secret
-#    Name: NPM_TOKEN
-#    Value: npm_xxxx...
-#
-# NOTE: Package name must be available on npm. Check at:
-# https://www.npmjs.com/package/claude-code-relay
 
 name: Publish npm Package
 
@@ -17,47 +7,9 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to publish (e.g., 0.1.0)"
-        required: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: node
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run type check
-        run: npm run typecheck
-
-      - name: Build
-        run: npm run build
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-dist
-          path: |
-            node/dist/
-            node/package.json
-            node/README.md
-
   publish:
-    needs: build
     runs-on: ubuntu-latest
     environment: npm
     defaults:
@@ -70,13 +22,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: node-dist
-          path: node/
+      - name: Install dependencies
+        run: npm ci
 
       - name: Publish to npm
         run: npm publish --access public
