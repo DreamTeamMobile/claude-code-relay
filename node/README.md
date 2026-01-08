@@ -2,7 +2,7 @@
 
 Local proxy that exposes Claude CLI as an OpenAI-compatible API server.
 
-Use your existing Claude CLI installation with any OpenAI-compatible client (LiteLLM, Vercel AI SDK, LangChain, etc).
+Use your existing Claude CLI installation with any OpenAI-compatible client.
 
 ## Why?
 
@@ -11,16 +11,6 @@ Use your existing Claude CLI installation with any OpenAI-compatible client (Lit
 - No separate API key needed - uses your local Claude CLI
 
 ## Installation
-
-### Python
-
-```bash
-pip install claude-code-relay
-# or
-uv pip install claude-code-relay
-# or
-poetry add claude-code-relay
-```
 
 ### Node.js / Bun
 
@@ -32,16 +22,22 @@ bunx claude-code-relay serve
 npm install -g claude-code-relay
 ```
 
+### Python
+
+```bash
+pip install claude-code-relay
+```
+
 ## Usage
 
 ### Start the server
 
 ```bash
-# Python
-claude-code-relay serve --port 52014
-
 # Node
 npx claude-code-relay serve --port 52014
+
+# Python
+claude-code-relay serve --port 52014
 ```
 
 ### Use with OpenAI SDK
@@ -106,29 +102,6 @@ const { text } = await generateText({
 });
 ```
 
-## Configuration
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLAUDE_RELAY_PORT` | `52014` | Server port |
-| `CLAUDE_CLI_PATH` | `claude` | Path to Claude CLI binary |
-| `CLAUDE_RELAY_TIMEOUT` | `300` | Request timeout in seconds |
-
-### CLI Options
-
-```bash
-claude-code-relay serve [options]
-
-Options:
-  --port, -p <port>      Server port (default: 52014)
-  --host, -h <host>      Host to bind (default: 127.0.0.1)
-  --claude-path <path>   Path to Claude CLI
-  --timeout <seconds>    Request timeout (default: 300)
-  --verbose, -v          Enable verbose logging
-```
-
 ## API Endpoints
 
 | Endpoint | Method | Description |
@@ -137,26 +110,90 @@ Options:
 | `/v1/models` | GET | List available models |
 | `/health` | GET | Health check |
 
-## Supported Features
+## OpenAI API Compatibility
 
-- [x] Chat completions
-- [x] Streaming (SSE)
-- [x] Model selection (sonnet, opus, haiku)
-- [x] System prompts
-- [ ] Function calling / tools (planned)
-- [ ] Vision / images (planned)
+### Supported Features
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| `model` | Supported | `sonnet`, `opus`, `haiku` (+ aliases below) |
+| `messages` | Supported | `system`, `user`, `assistant` roles |
+| `stream` | Supported | SSE streaming |
+| System prompts | Supported | Via `system` role in messages |
+
+### Model Aliases
+
+These model names are normalized to Claude CLI format:
+
+| Input | Maps to |
+|-------|---------|
+| `sonnet` | `sonnet` |
+| `opus` | `opus` |
+| `haiku` | `haiku` |
+| `claude-3-sonnet` | `sonnet` |
+| `claude-3-opus` | `opus` |
+| `claude-3-haiku` | `haiku` |
+| `claude-sonnet-4` | `sonnet` |
+| `claude-opus-4` | `opus` |
+
+### Not Supported
+
+These parameters are accepted but **ignored** (not passed to Claude CLI):
+
+| Parameter | Status |
+|-----------|--------|
+| `temperature` | Ignored |
+| `max_tokens` | Ignored |
+| `top_p` | Ignored |
+| `stop` | Ignored |
+| `n` | Not supported |
+| `presence_penalty` | Not supported |
+| `frequency_penalty` | Not supported |
+| `logit_bias` | Not supported |
+| `response_format` | Not supported |
+| `tools` / `functions` | Not supported |
+| `tool_choice` | Not supported |
+| `seed` | Not supported |
+| `logprobs` | Not supported |
+| `user` | Not supported |
+
+### Response Limitations
+
+- `usage` tokens are always `0` (not tracked by Claude CLI)
+- `finish_reason` is always `"stop"` (no length/tool_calls detection)
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CLAUDE_CODE_RELAY_PORT` | `52014` | Server port (Python only) |
+| `CLAUDE_CODE_RELAY_HOST` | `127.0.0.1` | Host to bind (Python only) |
+| `CLAUDE_CLI_PATH` | `claude` | Path to Claude CLI binary |
+| `CLAUDE_CODE_RELAY_TIMEOUT` | `300` | Request timeout in seconds |
+| `CLAUDE_CODE_RELAY_VERBOSE` | `false` | Enable verbose logging (`1` or `true`) |
+
+### CLI Options
+
+```
+claude-code-relay serve [options]
+
+Options:
+  --port, -p <port>      Server port (default: 52014)
+  --host <host>          Host to bind (default: 127.0.0.1)
+  --claude-path <path>   Path to Claude CLI
+  --timeout <seconds>    Request timeout (default: 300)
+  --verbose, -v          Enable verbose logging
+```
 
 ## Requirements
 
 - Claude CLI installed and authenticated
-- Python 3.10+ or Node.js 18+ / Bun
+- Python 3.10+ or Node.js 18+
 
 ## License
 
-MIT License - see [LICENSE](LICENSE)
+MIT - see [LICENSE](LICENSE)
 
-**DISCLAIMER**: This is an unofficial community project. Users are responsible for their own compliance with Anthropic's Terms of Service.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+**Disclaimer**: Unofficial community project. Users are responsible for compliance with Anthropic's Terms of Service.
