@@ -1,23 +1,28 @@
 {
   "name": "claude-code-relay",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Local proxy that exposes Claude CLI as an OpenAI-compatible API server",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
   "bin": {
-    "claude-code-relay": "./dist/cli.js"
+    "claude-code-relay": "./dist/esm/cli.js"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:esm": "esbuild src/*.ts --bundle --platform=node --format=esm --outdir=dist/esm --packages=external",
+    "build:cjs": "esbuild src/*.ts --bundle --platform=node --format=cjs --outdir=dist/cjs --packages=external",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist/esm",
     "dev": "tsc --watch",
-    "start": "node dist/cli.js serve",
+    "start": "node dist/esm/cli.js serve",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -52,6 +57,7 @@
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^25.0.3",
+    "esbuild": "^0.27.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
   }
