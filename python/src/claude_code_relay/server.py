@@ -7,7 +7,7 @@ import logging
 import time
 import uuid
 from dataclasses import asdict
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import TYPE_CHECKING, Any
 
 from .cli_wrapper import ClaudeCLI, CLIConfig

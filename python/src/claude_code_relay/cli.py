@@ -78,7 +78,7 @@ def main() -> None:
             verbose=args.verbose,
         )
 
-        print(f"Starting Claude Code Relay server...")
+        print("Starting Claude Code Relay server...")
         print(f"  Host: {args.host}")
         print(f"  Port: {args.port}")
         print(f"  Claude CLI: {args.claude_path}")

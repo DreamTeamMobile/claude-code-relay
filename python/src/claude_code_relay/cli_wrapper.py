@@ -7,8 +7,8 @@ import logging
 import os
 import shutil
 import subprocess
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Iterator
 
 logger = logging.getLogger(__name__)
 
@@ -119,8 +119,8 @@ class ClaudeCLI:
                 text=True,
                 timeout=self.config.timeout,
             )
-        except subprocess.TimeoutExpired:
-            raise RuntimeError(f"Claude CLI timeout after {self.config.timeout}s")
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"Claude CLI timeout after {self.config.timeout}s") from e
 
         if result.returncode != 0:
             raise RuntimeError(f"Claude CLI failed: {result.stderr}")
