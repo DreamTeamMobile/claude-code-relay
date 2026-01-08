@@ -1,16 +1,5 @@
-# Publish Python package to PyPI
-#
-# SETUP REQUIRED:
-# 1. Create PyPI account at https://pypi.org/
-# 2. Create API token at https://pypi.org/manage/account/token/
-# 3. Add token as GitHub secret: Settings > Secrets > Actions > New repository secret
-#    Name: PYPI_API_TOKEN
-#    Value: pypi-xxxx...
-#
-# OPTIONAL: Test on TestPyPI first
-# 1. Create account at https://test.pypi.org/
-# 2. Add secret: TEST_PYPI_API_TOKEN
-# 3. Uncomment the test-pypi job below
+# Publish Python package to PyPI using OIDC trusted publishing
+# Setup: pypi.org > Package Settings > Publishing > Add trusted publisher
 
 name: Publish Python Package
 
@@ -19,10 +8,6 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to publish (e.g., 0.1.0)"
-        required: true
 
 jobs:
   build:
@@ -56,30 +41,12 @@ jobs:
           name: python-dist
           path: python/dist/
 
-  # Uncomment to test on TestPyPI first
-  # test-pypi:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   environment: test-pypi
-  #
-  #   steps:
-  #     - uses: actions/download-artifact@v4
-  #       with:
-  #         name: python-dist
-  #         path: dist/
-  #
-  #     - name: Publish to TestPyPI
-  #       uses: pypa/gh-action-pypi-publish@release/v1
-  #       with:
-  #         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-  #         repository-url: https://test.pypi.org/legacy/
-
   publish:
     needs: build
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
-      id-token: write  # Required for trusted publishing
+      id-token: write
 
     steps:
       - uses: actions/download-artifact@v4
@@ -89,5 +56,3 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}

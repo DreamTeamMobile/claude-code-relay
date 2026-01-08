@@ -20,7 +20,7 @@ def main() -> None:
     parser.add_argument(
         "--version", "-V",
         action="version",
-        version="claude-code-relay 0.0.1",
+        version="claude-code-relay 0.0.7",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Commands")
