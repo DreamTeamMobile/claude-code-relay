@@ -2,6 +2,8 @@
 
 OpenAI-compatible API server that wraps your local Claude CLI.
 
+![Demo](https://raw.githubusercontent.com/DreamTeamMobile/claude-code-relay/main/assets/claude-code-relay-demo.png)
+
 ## Why?
 
 Creating API keys is friction when you just want to experiment. You already pay for Claude Code subscription - use it.
