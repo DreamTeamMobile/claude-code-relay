@@ -1,6 +1,6 @@
 {
   "name": "claude-code-relay",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Local proxy that exposes Claude CLI as an OpenAI-compatible API server",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -60,5 +60,8 @@
     "esbuild": "^0.27.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.55.1"
   }
 }
