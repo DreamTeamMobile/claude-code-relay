@@ -1,5 +1,8 @@
 # claude-code-relay
 
+[![PyPI Downloads](https://img.shields.io/pypi/dm/claude-code-relay)](https://pypi.org/project/claude-code-relay/)
+[![npm Downloads](https://img.shields.io/npm/dm/claude-code-relay)](https://www.npmjs.com/package/claude-code-relay)
+
 OpenAI-compatible API server that wraps your local Claude CLI.
 
 ![Demo](https://raw.githubusercontent.com/DreamTeamMobile/claude-code-relay/main/assets/claude-code-relay-demo.png)
